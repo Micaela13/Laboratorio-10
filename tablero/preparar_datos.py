@@ -1,16 +1,33 @@
-"""Agrega la base de migración del Laboratorio 1 a un CSV liviano para el tablero.
+"""Agrega la base de migración del Laboratorio 1 a CSV livianos para el tablero.
 
 Uso:
     python preparar_datos.py ruta/Base_Migracion_2009-2026jun.xlsx
-Genera:
-    data/migracion_agregada.csv  (año, mes, vía, tipo de viajero, viajeros)
+Genera en data/:
+    migracion_agregada.csv  (año, mes, vía, tipo de viajero, viajeros)
+    paises_anual.csv        (año, país, región de origen, vía, tipo, viajeros)
+    fronteras_mensual.csv   (año, mes, vía, frontera, tipo, viajeros)
 """
 import sys
 from pathlib import Path
 
 import pandas as pd
 
-SALIDA = Path(__file__).parent / "data" / "migracion_agregada.csv"
+DATOS = Path(__file__).parent / "data"
+
+# MCEO agrupado en 5 regiones de origen (colores Okabe-Ito disponibles sin repetir vías).
+REGION = {
+    "01 CENTROAMÉRICA": "Centroamérica",
+    "02 NORTEAMÉRICA": "Norteamérica",
+    "04 EUROPA": "Europa",
+    "03 SUDAMÉRICA": "Sudamérica",
+}
+
+
+def guardar(df: pd.DataFrame, claves: list[str], nombre: str) -> None:
+    agregada = df.groupby(claves, as_index=False)["viajeros"].sum()
+    agregada["viajeros"] = agregada["viajeros"].round(0).astype(int)
+    agregada.to_csv(DATOS / nombre, index=False, encoding="utf-8")
+    print(f"Guardado {nombre} ({len(agregada)} filas)")
 
 
 def main(ruta_xlsx: str) -> None:
@@ -21,16 +38,16 @@ def main(ruta_xlsx: str) -> None:
         "Vía": "via",
         "Tipo de Viajero": "tipo",
         "Viajero": "viajeros",
+        "País": "pais",
+        "Frontera": "frontera",
     })
     df["viajeros"] = df["viajeros"].fillna(0)
-    agregada = (
-        df.groupby(["ano", "mes", "via", "tipo"], as_index=False)["viajeros"]
-        .sum()
-    )
-    agregada["viajeros"] = agregada["viajeros"].round(0).astype(int)
-    SALIDA.parent.mkdir(parents=True, exist_ok=True)
-    agregada.to_csv(SALIDA, index=False, encoding="utf-8")
-    print(f"Guardado {SALIDA} ({len(agregada)} filas)")
+    df["region"] = df["MCEO"].map(REGION).fillna("Resto del mundo")
+    df["frontera"] = df["frontera"].str.replace(r"^\d+\s+", "", regex=True)
+    DATOS.mkdir(parents=True, exist_ok=True)
+    guardar(df, ["ano", "mes", "via", "tipo"], "migracion_agregada.csv")
+    guardar(df, ["ano", "pais", "region", "via", "tipo"], "paises_anual.csv")
+    guardar(df, ["ano", "mes", "via", "frontera", "tipo"], "fronteras_mensual.csv")
 
 
 if __name__ == "__main__":
