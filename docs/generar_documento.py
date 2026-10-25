@@ -115,7 +115,9 @@ def pie_pagina(canvas, doc) -> None:
 h = [
     Paragraph("Tablero de viajeros internacionales a Guatemala", E["titulo"]),
     Paragraph("Documento de diseño · Laboratorio 10 (CC3066) · Observatorio de Turismo "
-              "Sostenible · Datos: base de migración, enero 2009 a junio 2026", E["sub"]),
+              "Sostenible · Datos: base de migración, enero 2009 a junio 2026<br/>"
+              "Integrantes: Micaela Yataz, Carlos Aldana, Dolan Cuellar y Daniel Sarmiento",
+              E["sub"]),
 
     Paragraph("1. Propósito y público", E["h1"]),
     p("El tablero resume el flujo de viajeros internacionales que ingresan a Guatemala para "
